@@ -4,15 +4,15 @@ import { useRouter } from 'next/navigation';
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface Patient {
-    cccd: string;
-    name: string;
-    dob: string;
+    national_id: string;
+    full_name: string;
+    date_of_birth: string;
     gender: string;
+    phone: string;
     ward: string;
     province: string;
-    phone: string;
     ethnicity: string;
-    job: string;
+    occupation: string;
 }
 
 interface Service {

@@ -3,26 +3,28 @@
 import React, { useState } from 'react';
 import { CreditCard, User, Phone, Calendar, Scan } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { mockAPI } from '../services/mockAPI';
 import NumericKeyboard from './ui/NumericKeyboard';
 import CCCDScanner from './ui/CCCDScanner';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/app/components/ui/use-toast';
+import api from '@/app/axios/api';
 
 const PatientInfo: React.FC = () => {
     const { setCurrentStep, patient, setPatient } = useAppContext();
     const [cccd, setCccd] = useState('');
     const [showKeyboard, setShowKeyboard] = useState(false);
     const [patientForm, setPatientForm] = useState({
-        name: '',
-        dob: '',
+        national_id: '', // CCCD
+        full_name: '', // Họ và tên
+        date_of_birth: '',
         gender: '',
+        phone: '',
         ward: '',
         province: '',
-        phone: '',
         ethnicity: '',
-        job: '',
+        occupation: '', // Nghề nghiệp
     });
+
     const [showForm, setShowForm] = useState(false);
     const [patientExists, setPatientExists] = useState(false);
     const [showPhoneKeyboard, setShowPhoneKeyboard] = useState(false);
@@ -30,70 +32,103 @@ const PatientInfo: React.FC = () => {
     const router = useRouter();
     const { toast } = useToast();
 
+    const handleCCCDCheck = async (cccdValue: string) => {
+        try {
+            setPatientForm({ ...patientForm, national_id: cccdValue });
+
+            // Kiểm tra thông tin bảo hiểm
+            const insuranceResponse = await api.get(
+                `/insurances/check/${cccdValue}`
+            );
+            if (!insuranceResponse?.data?.has_insurance) {
+                toast({
+                    title: 'Không tìm thấy thông tin bảo hiểm',
+                    description: 'Vui lòng chuyển sang khám dịch vụ.',
+                    variant: 'destructive',
+                });
+                router.push('/');
+                return;
+            }
+
+            // Đăng nhập bệnh nhân
+            const loginResponse = await api.post('/auth/patient/login', {
+                national_id: cccdValue,
+            });
+            if (!loginResponse?.data?.token?.access_token) {
+                throw new Error('Không thể đăng nhập: Token không hợp lệ');
+            }
+
+            // Lưu token vào localStorage
+            localStorage.setItem(
+                'access_token',
+                loginResponse.data.token.access_token
+            );
+            localStorage.setItem(
+                'refresh_token',
+                loginResponse.data.token.refresh_token
+            );
+
+            // Lấy thông tin bệnh nhân từ API /patients/me
+            const patientResponse = await api.get('/patients/me');
+            if (patientResponse?.data) {
+                setPatient(patientResponse.data);
+                setPatientExists(true);
+            } else {
+                setShowForm(true); // Nếu không tìm thấy bệnh nhân, hiển thị form nhập thông tin
+            }
+        } catch (error) {
+            toast({
+                title: 'Lỗi hệ thống',
+                description:
+                    'Không thể xử lý thông tin CCCD. Vui lòng thử lại.',
+                variant: 'destructive',
+            });
+            console.error('Error in handleCCCDCheck:', error);
+        }
+    };
+
     const handleScanSuccess = async (scannedCCCD: string) => {
         setCccd(scannedCCCD);
         setShowScanner(false);
-
-        // CCCD check
-        const insuranceData = await mockAPI.checkInsurance(scannedCCCD);
-        if (!insuranceData) {
-            toast({
-                title: 'Không tìm thấy thông tin bảo hiểm',
-                description: 'Vui lòng chuyển sang khám dịch vụ.',
-            });
-            router.push('/');
-        }
-
-        const existingPatient = await mockAPI.getPatientByCCCD(scannedCCCD);
-        if (existingPatient) {
-            setPatient(existingPatient);
-            setPatientExists(true);
-        } else {
-            setShowForm(true);
-        }
+        await handleCCCDCheck(scannedCCCD);
     };
 
     const handleCCCDSubmit = async () => {
         if (cccd.length !== 12) {
-            alert('CCCD phải có 12 số');
+            toast({
+                title: 'CCCD không hợp lệ',
+                description: 'CCCD phải có đúng 12 số.',
+                variant: 'destructive',
+            });
             return;
         }
-
-        const insuranceData = await mockAPI.checkInsurance(cccd);
-        if (!insuranceData) {
-            toast({
-                title: 'Không tìm thấy thông tin bảo hiểm',
-                description: 'Vui lòng chuyển sang khám dịch vụ.',
-            });
-            router.push('/');
-        }
-
-        const existingPatient = await mockAPI.getPatientByCCCD(cccd);
-        if (existingPatient) {
-            setPatient(existingPatient);
-            setPatientExists(true);
-        } else {
-            setShowForm(true);
-        }
+        await handleCCCDCheck(cccd);
     };
 
     const handleFormSubmit = () => {
-        if (
-            !patientForm.name ||
-            !patientForm.dob ||
-            !patientForm.gender ||
-            !patientForm.phone
-        ) {
-            alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+        const requiredFields = [
+            patientForm.national_id,
+            patientForm.full_name,
+            patientForm.date_of_birth,
+            patientForm.gender,
+            patientForm.phone,
+            patientForm.ward,
+            patientForm.province,
+            patientForm.ethnicity,
+            patientForm.occupation,
+        ];
+
+        if (requiredFields.some(field => !field)) {
+            toast({
+                title: 'Thiếu thông tin',
+                description: 'Vui lòng điền đầy đủ tất cả các trường bắt buộc.',
+                variant: 'destructive',
+            });
             return;
         }
 
-        const newPatient = {
-            cccd,
-            ...patientForm,
-        };
-
-        setPatient(newPatient);
+        // Lưu thông tin bệnh nhân vào context
+        setPatient(patientForm);
         setPatientExists(true);
     };
 
@@ -121,7 +156,7 @@ const PatientInfo: React.FC = () => {
                                     Số CCCD
                                 </label>
                                 <p className="text-lg font-semibold text-gray-900">
-                                    {patient.cccd}
+                                    {patient.national_id}
                                 </p>
                             </div>
                             <div>
@@ -129,7 +164,7 @@ const PatientInfo: React.FC = () => {
                                     Họ và tên
                                 </label>
                                 <p className="text-lg font-semibold text-gray-900">
-                                    {patient.name}
+                                    {patient.full_name}
                                 </p>
                             </div>
                             <div>
@@ -137,7 +172,7 @@ const PatientInfo: React.FC = () => {
                                     Ngày sinh
                                 </label>
                                 <p className="text-lg font-semibold text-gray-900">
-                                    {patient.dob}
+                                    {patient.date_of_birth}
                                 </p>
                             </div>
                             <div>
@@ -176,10 +211,18 @@ const PatientInfo: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Dân tộc
+                                </label>
+                                <p className="text-lg font-semibold text-gray-900">
+                                    {patient.ethnicity}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Nghề nghiệp
                                 </label>
                                 <p className="text-lg font-semibold text-gray-900">
-                                    {patient.job}
+                                    {patient.occupation}
                                 </p>
                             </div>
                         </div>
@@ -215,15 +258,27 @@ const PatientInfo: React.FC = () => {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Số CCCD *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={patientForm.national_id}
+                                    readOnly
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 text-lg"
+                                    placeholder="Số CCCD"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Họ và tên *
                                 </label>
                                 <input
                                     type="text"
-                                    value={patientForm.name}
+                                    value={patientForm.full_name}
                                     onChange={e =>
                                         setPatientForm({
                                             ...patientForm,
-                                            name: e.target.value,
+                                            full_name: e.target.value,
                                         })
                                     }
                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
@@ -236,11 +291,11 @@ const PatientInfo: React.FC = () => {
                                 </label>
                                 <input
                                     type="date"
-                                    value={patientForm.dob}
+                                    value={patientForm.date_of_birth}
                                     onChange={e =>
                                         setPatientForm({
                                             ...patientForm,
-                                            dob: e.target.value,
+                                            date_of_birth: e.target.value,
                                         })
                                     }
                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
@@ -290,7 +345,7 @@ const PatientInfo: React.FC = () => {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Phường/Xã
+                                    Phường/Xã *
                                 </label>
                                 <select
                                     value={patientForm.ward}
@@ -310,7 +365,7 @@ const PatientInfo: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Tỉnh/Thành phố
+                                    Tỉnh/Thành phố *
                                 </label>
                                 <select
                                     value={patientForm.province}
@@ -334,7 +389,7 @@ const PatientInfo: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Dân tộc
+                                    Dân tộc *
                                 </label>
                                 <select
                                     value={patientForm.ethnicity}
@@ -354,14 +409,14 @@ const PatientInfo: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nghề nghiệp
+                                    Nghề nghiệp *
                                 </label>
                                 <select
-                                    value={patientForm.job}
+                                    value={patientForm.occupation}
                                     onChange={e =>
                                         setPatientForm({
                                             ...patientForm,
-                                            job: e.target.value,
+                                            occupation: e.target.value,
                                         })
                                     }
                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
@@ -418,14 +473,14 @@ const PatientInfo: React.FC = () => {
 
                 <div className="max-w-md mx-auto mb-8">
                     <div
-                        className="relative cursor-pointer "
+                        className="relative cursor-pointer"
                         onClick={() => setShowKeyboard(true)}
                     >
                         <input
                             type="text"
                             value={cccd}
                             readOnly
-                            className="w-full px-6 py-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-2xl font-semibold text-center cursor-pointer "
+                            className="w-full px-6 py-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-2xl font-semibold text-center cursor-pointer"
                             placeholder="Nhấn để nhập CCCD"
                         />
                         <CreditCard
@@ -434,7 +489,6 @@ const PatientInfo: React.FC = () => {
                         />
                     </div>
 
-                    {/* Scan CCCD Button */}
                     <div className="mt-6">
                         <button
                             onClick={() => setShowScanner(true)}
