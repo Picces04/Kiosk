@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { CreditCard, User, Phone, Calendar, Scan } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import NumericKeyboard from './ui/NumericKeyboard';
-import CCCDScanner from './ui/CCCDScanner';
+import NumericKeyboard from './NumericKeyboard';
+import CCCDScanner from './CCCDScanner';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/app/components/ui/use-toast';
 import api from '@/app/axios/api';
@@ -42,9 +42,8 @@ const PatientInfo: React.FC = () => {
             );
             if (!insuranceResponse?.data?.has_insurance) {
                 toast({
-                    title: 'Không tìm thấy thông tin bảo hiểm',
+                    title: '🚧 Không tìm thấy thông tin bảo hiểm !',
                     description: 'Vui lòng chuyển sang khám dịch vụ.',
-                    variant: 'destructive',
                 });
                 router.push('/');
                 return;
@@ -58,15 +57,12 @@ const PatientInfo: React.FC = () => {
                 throw new Error('Không thể đăng nhập: Token không hợp lệ');
             }
 
-            // Lưu token vào localStorage
-            localStorage.setItem(
-                'access_token',
-                loginResponse.data.token.access_token
-            );
-            localStorage.setItem(
-                'refresh_token',
-                loginResponse.data.token.refresh_token
-            );
+            ['access_token', 'refresh_token'].forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                }
+                localStorage.setItem(key, loginResponse.data.token[key]);
+            });
 
             // Lấy thông tin bệnh nhân từ API /patients/me
             const patientResponse = await api.get('/patients/me');
@@ -81,7 +77,6 @@ const PatientInfo: React.FC = () => {
                 title: 'Lỗi hệ thống',
                 description:
                     'Không thể xử lý thông tin CCCD. Vui lòng thử lại.',
-                variant: 'destructive',
             });
             console.error('Error in handleCCCDCheck:', error);
         }
@@ -98,7 +93,6 @@ const PatientInfo: React.FC = () => {
             toast({
                 title: 'CCCD không hợp lệ',
                 description: 'CCCD phải có đúng 12 số.',
-                variant: 'destructive',
             });
             return;
         }
@@ -122,7 +116,6 @@ const PatientInfo: React.FC = () => {
             toast({
                 title: 'Thiếu thông tin',
                 description: 'Vui lòng điền đầy đủ tất cả các trường bắt buộc.',
-                variant: 'destructive',
             });
             return;
         }

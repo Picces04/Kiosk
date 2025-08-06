@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Printer, User, Stethoscope, QrCode } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import Image from 'next/image';
 
 const PrintTicket: React.FC = () => {
     const { patient, selectedService, appointment, resetApp } = useAppContext();
@@ -58,13 +59,13 @@ const PrintTicket: React.FC = () => {
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Họ tên:</span>
                                 <span className="font-semibold">
-                                    {patient.name}
+                                    {patient.full_name}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-600">CCCD:</span>
                                 <span className="font-semibold font-mono">
-                                    {patient.cccd}
+                                    {patient.national_id}
                                 </span>
                             </div>
                             <div className="flex justify-between">
@@ -72,7 +73,7 @@ const PrintTicket: React.FC = () => {
                                     Ngày sinh:
                                 </span>
                                 <span className="font-semibold">
-                                    {patient.dob}
+                                    {patient.date_of_birth}
                                 </span>
                             </div>
                             <div className="flex justify-between">
@@ -113,13 +114,13 @@ const PrintTicket: React.FC = () => {
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Phòng:</span>
                                 <span className="font-semibold">
-                                    {appointment.room}
+                                    {appointment.clinic_name}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Bác sĩ:</span>
                                 <span className="font-semibold">
-                                    {appointment.doctor}
+                                    {appointment.doctor_name}
                                 </span>
                             </div>
                             <div className="flex justify-between">
@@ -127,7 +128,7 @@ const PrintTicket: React.FC = () => {
                                     Số thứ tự:
                                 </span>
                                 <span className="font-semibold text-2xl text-green-600">
-                                    {appointment.queueNumber}
+                                    {appointment.queue_number}
                                 </span>
                             </div>
                             <div className="flex justify-between">
@@ -135,7 +136,15 @@ const PrintTicket: React.FC = () => {
                                     Thời gian:
                                 </span>
                                 <span className="font-semibold">
-                                    {appointment.time}
+                                    {new Date(
+                                        appointment.appointment_time
+                                    ).toLocaleString('vi-VN', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                    })}
                                 </span>
                             </div>
                         </div>
@@ -143,7 +152,7 @@ const PrintTicket: React.FC = () => {
                 </div>
 
                 {/* QR Code */}
-                {appointment.qrCode && (
+                {appointment.qr_code ? (
                     <div className="mt-8 text-center">
                         <div className="bg-gray-50 rounded-xl p-6 inline-block">
                             <div className="flex items-center justify-center mb-4">
@@ -156,7 +165,35 @@ const PrintTicket: React.FC = () => {
                                 </span>
                             </div>
                             <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center mx-auto">
-                                <QrCode size={80} className="text-gray-400" />
+                                <Image
+                                    src={`data:image/png;base64,${appointment.qr_code}`}
+                                    alt="QR Code"
+                                    width={128}
+                                    height={128}
+                                    unoptimized
+                                />
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="mt-8 text-center">
+                        <div className="bg-gray-100 rounded-xl p-6 inline-block">
+                            <div className="flex items-center justify-center mb-4">
+                                <QrCode
+                                    className="text-gray-400 mr-2"
+                                    size={20}
+                                />
+                                <span className="text-gray-500">
+                                    Vui lòng đăng nhập để xem mã QR
+                                </span>
+                            </div>
+                            <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center mx-auto">
+                                <Image
+                                    src="/images/placeholder-qr.png"
+                                    alt="QR Placeholder"
+                                    width={128}
+                                    height={128}
+                                />
                             </div>
                         </div>
                     </div>

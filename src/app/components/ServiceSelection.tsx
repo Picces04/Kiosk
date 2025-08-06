@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Stethoscope, DollarSign, MapPin, Clock } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { mockAPI } from '../services/mockAPI';
-import RoomModal from '../components/ui/RoomModal';
+import RoomModal from './RoomModal';
 import type { Service, Room } from '../context/AppContext';
+import api from '../axios/api';
 
 const ServiceSelection: React.FC = () => {
     const {
@@ -21,8 +21,8 @@ const ServiceSelection: React.FC = () => {
     useEffect(() => {
         const fetchServices = async () => {
             setLoading(true);
-            const data = await mockAPI.getServices();
-            setServices(data);
+            const data = await api.get(`/services/`);
+            setServices(data?.data);
             setLoading(false);
         };
 
@@ -36,11 +36,13 @@ const ServiceSelection: React.FC = () => {
 
     const handleRoomSelect = async (room: Room) => {
         if (!selectedService) return;
-        const appointmentData = await mockAPI.createAppointment({
-            service: selectedService,
-            room,
+        const appointmentData = await api.post(`/appointments/`, {
+            service_id: selectedService.id,
+            clinic_id: room.clinic_id,
+            doctor_id: room.doctor_id,
         });
-        setAppointment(appointmentData);
+
+        setAppointment(appointmentData?.data);
         setShowRoomModal(false);
         setCurrentStep(3);
     };
@@ -97,14 +99,14 @@ const ServiceSelection: React.FC = () => {
                                 </div>
                             </div>
 
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 capitalize">
                                 {service.name}
                             </h3>
 
                             <div className="flex items-center text-gray-600 mb-3">
                                 <MapPin size={16} className="mr-2" />
                                 <span className="text-sm">
-                                    {service.department}
+                                    {service.description}
                                 </span>
                             </div>
 

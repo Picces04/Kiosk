@@ -19,22 +19,24 @@ interface Service {
     id: string;
     name: string;
     price: number;
-    department: string;
+    description: string;
 }
 
 interface Room {
-    id: string;
-    name: string;
-    doctor: string;
-    available: boolean;
+    clinic_id: number;
+    clinic_name: string;
+    clinic_status: string;
+    doctor_id: number;
+    doctor_name: string;
+    phone: string;
 }
 
 interface Appointment {
-    room: string;
-    doctor: string;
-    queueNumber: number;
-    qrCode?: string;
-    time: string;
+    clinic_name: string;
+    doctor_name: string;
+    queue_number: number;
+    qr_code: string;
+    appointment_time: string;
 }
 
 interface AppContextType {

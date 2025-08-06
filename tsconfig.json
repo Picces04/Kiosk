@@ -20,15 +20,17 @@
         ],
         "paths": {
             "@/*": ["./src/*"]
-        }
+        },
+        "typeRoots": ["./node_modules/@types", "./types"]
     },
     "include": [
         "next-env.d.ts",
         "**/*.ts",
         "**/*.tsx",
+        "**/*.jsx",
+        "**/*.d.ts",
         ".next/types/**/*.ts",
-        "../../React/project/src/context/AppContext.tsx",
-        "src/app/components/ui/toast.jsx"
+        "types/**/*.d.ts"
     ],
     "exclude": ["node_modules"]
 }

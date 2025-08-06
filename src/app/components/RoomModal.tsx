@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, User, Clock, CheckCircle } from 'lucide-react';
-import { mockAPI } from '@/app/services/mockAPI';
 import type { Service, Room } from '@/app/context/AppContext';
+import api from '@/app/axios/api';
 
 interface RoomModalProps {
     service: Service;
@@ -16,8 +16,8 @@ const RoomModal = ({ service, onRoomSelect, onClose }: RoomModalProps) => {
     useEffect(() => {
         const fetchRooms = async () => {
             setLoading(true);
-            const data = await mockAPI.getRooms(service.id);
-            setRooms(data); // giả định mockAPI.getRooms() trả về Room[]
+            const data = await api.get(`/clinics/by-service/${service.id}`);
+            setRooms(data?.data);
             setLoading(false);
         };
 
@@ -34,7 +34,9 @@ const RoomModal = ({ service, onRoomSelect, onClose }: RoomModalProps) => {
                         <h3 className="text-2xl font-bold text-gray-900">
                             Chọn Phòng Khám
                         </h3>
-                        <p className="text-gray-600">Dịch vụ: {service.name}</p>
+                        <p className="text-gray-600 capitalize">
+                            Dịch vụ: {service.name}
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
@@ -55,21 +57,21 @@ const RoomModal = ({ service, onRoomSelect, onClose }: RoomModalProps) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {rooms.map(room => (
                             <div
-                                key={room.id}
+                                key={room.clinic_id}
                                 className={`rounded-xl p-6 border-2 transition-all duration-300 cursor-pointer ${
-                                    room.available
+                                    room.clinic_status
                                         ? 'border-green-200 bg-green-50 hover:border-green-300 hover:shadow-md'
                                         : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
                                 }`}
                                 onClick={() =>
-                                    room.available && onRoomSelect(room)
+                                    room.clinic_status && onRoomSelect(room)
                                 }
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center">
                                         <div
                                             className={`rounded-lg p-3 ${
-                                                room.available
+                                                room.clinic_status
                                                     ? 'bg-green-500'
                                                     : 'bg-gray-400'
                                             }`}
@@ -81,14 +83,14 @@ const RoomModal = ({ service, onRoomSelect, onClose }: RoomModalProps) => {
                                         </div>
                                         <div className="ml-3">
                                             <h4 className="font-semibold text-gray-900">
-                                                {room.name}
+                                                {room.doctor_name}
                                             </h4>
-                                            <p className="text-sm text-gray-600">
-                                                Phòng {room.id}
+                                            <p className="text-sm text-gray-600 capitalize">
+                                                Phòng {room.clinic_name}
                                             </p>
                                         </div>
                                     </div>
-                                    {room.available && (
+                                    {room.clinic_status && (
                                         <CheckCircle
                                             className="text-green-500"
                                             size={20}
@@ -100,13 +102,13 @@ const RoomModal = ({ service, onRoomSelect, onClose }: RoomModalProps) => {
                                     <div className="flex items-center text-gray-600">
                                         <User size={16} className="mr-2" />
                                         <span className="text-sm">
-                                            Bác sĩ: {room.doctor}
+                                            Bác sĩ: {room.doctor_name}
                                         </span>
                                     </div>
                                     <div className="flex items-center text-gray-600">
                                         <Clock size={16} className="mr-2" />
                                         <span className="text-sm">
-                                            {room.available
+                                            {room.clinic_status
                                                 ? 'Đang hoạt động'
                                                 : 'Tạm ngưng'}
                                         </span>
@@ -115,14 +117,14 @@ const RoomModal = ({ service, onRoomSelect, onClose }: RoomModalProps) => {
 
                                 <div className="mt-4 pt-4 border-t">
                                     <button
-                                        disabled={!room.available}
+                                        disabled={!room.clinic_status}
                                         className={`w-full font-semibold py-2 px-4 rounded-lg transition-colors duration-200 cursor-pointer ${
-                                            room.available
+                                            room.clinic_status
                                                 ? 'bg-green-500 hover:bg-green-600 text-white'
                                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         }`}
                                     >
-                                        {room.available
+                                        {room.clinic_status
                                             ? 'Chọn phòng này'
                                             : 'Không khả dụng'}
                                     </button>
