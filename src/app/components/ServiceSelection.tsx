@@ -36,11 +36,14 @@ const ServiceSelection: React.FC = () => {
 
     const handleRoomSelect = async (room: Room) => {
         if (!selectedService) return;
-        const appointmentData = await api.post(`/appointments/`, {
-            service_id: selectedService.id,
-            clinic_id: room.clinic_id,
-            doctor_id: room.doctor_id,
-        });
+        const appointmentData = await api.post(
+            `/appointments/?has_insurances=true`,
+            {
+                service_id: selectedService.id,
+                clinic_id: room.clinic_id,
+                doctor_id: room.doctor_id,
+            }
+        );
 
         setAppointment(appointmentData?.data);
         setShowRoomModal(false);
