@@ -121,7 +121,7 @@ const CCCDScanner = ({ onScanSuccess, onClose }: CCCDScannerProps) => {
                             if (!errorMessage.includes('No QR code found')) {
                                 console.log(`Scan error: ${errorMessage}`);
                                 setError(
-                                    'Không thể quét mã QR. Vui lòng đưa thẻ gần hơn (10-15cm) hoặc cải thiện ánh sáng.'
+                                    'Không thể quét mã QR. Vui lòng chụp ảnh lại và phóng to QR ra gấp 2 lần.'
                                 );
                             }
                         }

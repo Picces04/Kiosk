@@ -86,7 +86,7 @@ const RoomModal = ({ service, onRoomSelect, onClose }: RoomModalProps) => {
                                                 {room.doctor_name}
                                             </h4>
                                             <p className="text-sm text-gray-600 capitalize">
-                                                Phòng {room.clinic_name}
+                                                {room.clinic_name}
                                             </p>
                                         </div>
                                     </div>
