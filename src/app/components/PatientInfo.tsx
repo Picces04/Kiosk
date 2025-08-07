@@ -54,7 +54,7 @@ const PatientInfo: React.FC = () => {
 
                 // Ví dụ lưu vào localStorage
                 localStorage.setItem(
-                    'has_insurance',
+                    'has_insurances',
                     JSON.stringify(hasInsurance)
                 );
 
