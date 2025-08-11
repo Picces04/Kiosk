@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import MainLayout from './(pages)/main/page';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export default function Home() {
     const pathname = usePathname();
