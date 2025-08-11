@@ -10,7 +10,7 @@ function getToken() {
 
 const baseURL =
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'https://web-production-ad4be.up.railway.app/';
+    'https://web-production-ad4be.up.railway.app';
 
 const api = axios.create({
     baseURL,
