@@ -45,10 +45,7 @@ export default function MainLayout() {
             subtitle: 'Xem kết quả khám bệnh',
             icon: FileText,
             color: 'bg-orange-500',
-            action: () =>
-                toast({
-                    title: '🚧 Tính năng này chưa được triển khai',
-                }),
+            action: () => router.push('/checkAppointments'),
         },
     ];
 
