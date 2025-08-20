@@ -15,7 +15,7 @@ export default function MainLayout() {
             subtitle: 'Đăng ký khám bệnh với thẻ BHYT',
             icon: Heart,
             color: 'bg-blue-500',
-            action: () => router.push('/bhyt'),
+            action: () => router.push('/offline'),
         },
         {
             id: 'service',
@@ -34,10 +34,7 @@ export default function MainLayout() {
             subtitle: 'Đặt lịch khám theo thời gian',
             icon: Clock,
             color: 'bg-purple-500',
-            action: () =>
-                toast({
-                    title: '🚧 Tính năng này chưa được triển khai',
-                }),
+            action: () => router.push('/online'),
         },
         {
             id: 'results',
