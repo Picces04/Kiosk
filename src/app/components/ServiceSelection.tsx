@@ -9,6 +9,7 @@ import RoomModal from './RoomModal';
 import PickCalendar from './PickCalender';
 import type { Service, Room } from '../context/AppContext';
 import api from '../axios/api';
+import { useToast } from '@/app/components/ui/use-toast';
 
 const ServiceSelection: React.FC = () => {
     const {
@@ -23,6 +24,7 @@ const ServiceSelection: React.FC = () => {
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
     const [loading, setLoading] = useState(true);
     const pathname = usePathname();
+    const { toast } = useToast();
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -46,15 +48,17 @@ const ServiceSelection: React.FC = () => {
         if (pathname === '/online') {
             setShowCalendarModal(true);
         } else if (pathname === '/offline') {
-            handleScheduleSelect('', 0); // Gọi hàm book appointment trực tiếp cho offline
+            handleScheduleSelect('', 0, room);
         }
     };
 
     const handleScheduleSelect = async (
         work_date: string,
-        schedule_id: number
+        schedule_id: number,
+        roomOverride?: Room
     ) => {
-        if (!selectedService || !selectedRoom) return;
+        const roomToUse = roomOverride || selectedRoom;
+        if (!selectedService || !roomToUse) return;
 
         try {
             const isOnline = pathname === '/online';
@@ -68,9 +72,9 @@ const ServiceSelection: React.FC = () => {
 
             const appointmentData = await api.post(apiEndpoint, {
                 service_id: selectedService.id,
-                clinic_id: selectedRoom.clinic_id,
-                doctor_id: selectedRoom.doctor_id,
-                ...(isOnline && { schedule_id }), // Chỉ thêm schedule_id nếu là online
+                clinic_id: roomToUse.clinic_id,
+                doctor_id: roomToUse.doctor_id,
+                ...(isOnline && { schedule_id }),
             });
 
             setAppointment(appointmentData?.data);
@@ -81,6 +85,12 @@ const ServiceSelection: React.FC = () => {
                 message: error.message,
                 response: error.response?.data,
                 status: error.response?.status,
+            });
+            const errorMessage =
+                error.response?.data?.detail || 'Đã có lỗi xảy ra khi đặt lịch';
+            toast({
+                title: 'Lỗi đặt lịch',
+                description: errorMessage,
             });
         }
     };
