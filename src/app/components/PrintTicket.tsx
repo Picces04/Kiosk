@@ -134,6 +134,7 @@ const PrintTicket: React.FC = () => {
     };
 
     // Kiểm tra trạng thái thanh toán
+
     const checkPaymentStatus = async () => {
         if (!order_code) {
             console.log(
@@ -194,17 +195,19 @@ const PrintTicket: React.FC = () => {
 
     // Kiểm tra trạng thái thanh toán định kỳ
     useEffect(() => {
-        let interval: NodeJS.Timeout | null = null;
-        if (order_code && paymentStatus !== 'PAID') {
-            console.log(
-                'Bắt đầu polling trạng thái thanh toán với order_code:',
-                order_code
-            );
-            interval = setInterval(checkPaymentStatus, 5000);
+        if (QR !== null) {
+            let interval: NodeJS.Timeout | null = null;
+            if (order_code && paymentStatus !== 'PAID') {
+                console.log(
+                    'Bắt đầu polling trạng thái thanh toán với order_code:',
+                    order_code
+                );
+                interval = setInterval(checkPaymentStatus, 5000);
+            }
+            return () => {
+                if (interval) clearInterval(interval);
+            };
         }
-        return () => {
-            if (interval) clearInterval(interval);
-        };
     }, [order_code, paymentStatus]);
 
     // Định dạng thời gian còn lại thành mm:ss
