@@ -147,14 +147,21 @@ const PrintTicket: React.FC = () => {
             order_code
         );
         try {
-            const response = await api.get(`/payments/orders/${order_code}`);
-            console.log('Phản hồi trạng thái thanh toán:', response.data);
-            setPaymentStatus(response.data.status);
-            if (response.data.paid_at) {
-                setTimepayment(new Date(response.data.paid_at));
-            }
-            if (response.data.qr_code_url && response.data.qr_code_url !== QR) {
-                setQR(response.data.qr_code_url);
+            if (QR !== null) {
+                const response = await api.get(
+                    `/payments/orders/${order_code}`
+                );
+                console.log('Phản hồi trạng thái thanh toán:', response.data);
+                setPaymentStatus(response.data.status);
+                if (response.data.paid_at) {
+                    setTimepayment(new Date(response.data.paid_at));
+                }
+                if (
+                    response.data.qr_code_url &&
+                    response.data.qr_code_url !== QR
+                ) {
+                    setQR(response.data.qr_code_url);
+                }
             }
         } catch (error) {
             console.error('Lỗi khi kiểm tra trạng thái thanh toán:', error);
