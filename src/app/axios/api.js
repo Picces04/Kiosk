@@ -9,7 +9,7 @@ function getToken() {
 }
 
 const baseURL =
-    process.env.NEXT_PUBLIC_API_BASE_URL || 'http://157.66.27.214/api';
+    process.env.NEXT_PUBLIC_API_BASE_URL || 'https://157.66.27.214/api';
 
 const api = axios.create({
     baseURL,
